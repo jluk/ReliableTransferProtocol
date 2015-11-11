@@ -1,3 +1,5 @@
+package Protocols;
+
 import java.net.InetAddress;
 
 /**
@@ -25,61 +27,32 @@ public class FXAClient {
    }
 
    int hostPort = Integer.parseInt(args[0]);
-
-   System.out.println("FTA Client started.");
-
-   // Client port is always equal to server port - 1.
-
-
-
    InetAddress IPAddress = InetAddress.getByName(args[1]);
    int destinationPort = Integer.parseInt(args[2]);
 
-   Scanner keyboard = new Scanner(System.in);
-   RXP testRTP = new RTP(IPAddress, hostPort, destinationPort, false);
+   System.out.println("File Transfer Protocol Client started.");
 
+   // RUNNING BLOCK
    while (true) {
-    String input = keyboard.nextLine();
-
-    if (input.equals("")) {
-     System.out.println("Please enter a command.");
-    }
-
-    String[] commands = input.split(" ");
-
-
-    if (commands[0].equals("connect-get") && commands.length == 2) {
-     testRTP.establishConnection(hostPort, destinationPort);
-     String fileName = commands[1];
-
-     if (testRTP.getState() == 2) {
-      testRTP.setFilename(commands[1]);
-      testRTP.sendRTPPacket(fileName.getBytes(Charset.forName("UTF-8")));
-      testRTP.setState(1);
-      testRTP.listen();
-     }
-
-
-    } else {
-     System.out.println("Invalid command or number of arguments.");
-    }
 
 
    }
-
-
   }
 
  /*
-  * 
-  *
+ * Download files to server from client
+ * @
+ */
+ public static void get(){
+
+ }
+  /*
+  * Upload files to server from client
+  * @
   */
  public static void put(){
 
  }
 
- public static void get(){
-
- }
 
 }
