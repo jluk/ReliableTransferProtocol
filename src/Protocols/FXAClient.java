@@ -1,6 +1,7 @@
 package Protocols;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 
@@ -68,6 +69,21 @@ public class FXAClient {
  */
  public static void get(String fileName){
 	 System.out.println("Log: get called with file name: " + fileName);
+	 
+	 if(client != null) {
+		 String msg = "test";
+		 try {
+			client.sendData(msg.getBytes());
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	 } else {
+		 System.out.println("Error: You must use the connect command before using get.");
+	 }
  }
   /*
   * Upload files to server from client

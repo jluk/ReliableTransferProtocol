@@ -2,6 +2,8 @@ package Protocols;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 /**
@@ -19,10 +21,13 @@ import java.net.InetAddress;
  */
 
 public class FXAServer {
+	
+	private static DatagramSocket serverSocket;
+	
 	public static void main(String[] args) throws Exception{
 		
 		if (args.length != 3) {
-		    System.out.println("Invalid number of arguments. Correct usage involves three command-line arguments, \"fta-client X A P\".");
+		    System.out.println("Invalid number of arguments. Correct usage involves three command-line arguments, \"fta-server X A P\".");
 		    System.out.println("X: the port number at which the FxA-clientâ€™s UDP socket should bind to (even number). This port number should be equal to the serverâ€™s port number minus 1");
 		    System.out.println("A: the IP address of NetEmu");
 		    System.out.println("P: the UDP port number of NetEmu");
@@ -33,7 +38,15 @@ public class FXAServer {
 		   InetAddress IPAddress = InetAddress.getByName(args[1]);
 		   int destinationPort = Integer.parseInt(args[2]);
 
-		   System.out.println("File Transfer Protocol Client started.");
+		   System.out.println("File Transfer Protocol Server started.");
+		   
+		   try {
+			   serverSocket = new DatagramSocket(hostPort);
+		   } catch(Exception e) {
+			   System.out.println("Error: Couldn't bind socket to port.");
+			   e.printStackTrace();
+			   System.exit(0);
+		   }
 		   
 		   BufferedReader stdIn = new BufferedReader( new InputStreamReader(System.in));
 
@@ -41,22 +54,31 @@ public class FXAServer {
 		   while (true) {
 			   String input;
 			   
-			   //Block until != null
-			   while((input = stdIn.readLine()) == null);
+			   byte[] rcvData = new byte[1024];
+			   DatagramPacket pack = new DatagramPacket(rcvData, rcvData.length);
+			   serverSocket.receive(pack);
 
-			   String[] inputLine = input.split("\\s");
+			   input = stdIn.readLine();
+
+			   if(input != null) {
+				   String[] inputLine = input.split("\\s");
+				   
+				   if(inputLine[0].equals("get")) {
+					   if(inputLine.length == 2) get(inputLine[1]);
+					   else System.out.println("Invalid command length. Usage example: get F");
+				   } else if (inputLine[0].equals("post")) {
+					   if(inputLine.length == 2) post(inputLine[1]);
+					   else System.out.println("Invalid command length. Usage example: post F");
+				   } else if (inputLine[0].equals("window")) {
+					   if(inputLine.length == 2) window(inputLine[1]);
+					   else System.out.println("Invalid command length. Usage example: window w");
+				   } else if (inputLine[0].equals("terminate")) terminate();
+				   else System.out.println("Invalid command.");
+			   }
 			   
-			   if(inputLine[0].equals("get")) {
-				   if(inputLine.length == 2) get(inputLine[1]);
-				   else System.out.println("Invalid command length. Usage example: get F");
-			   } else if (inputLine[0].equals("post")) {
-				   if(inputLine.length == 2) post(inputLine[1]);
-				   else System.out.println("Invalid command length. Usage example: post F");
-			   } else if (inputLine[0].equals("window")) {
-				   if(inputLine.length == 2) window(inputLine[1]);
-				   else System.out.println("Invalid command length. Usage example: window w");
-			   } else if (inputLine[0].equals("terminate")) terminate();
-			   else System.out.println("Invalid command.");
+			   if(pack != null) {
+				   System.out.println("Received a DatagramPacket");
+			   }
 		   }
 	}
 	
