@@ -51,6 +51,9 @@ public class FXAClient {
 	   } else if (inputLine[0].equals("post")) {
 		   if(inputLine.length == 2) post(inputLine[1]);
 		   else System.out.println("Invalid command length. Usage example: post F");
+	   } else if (inputLine[0].equals("window")) {
+		   if(inputLine.length == 2) window(inputLine[1]);
+		   else System.out.println("Invalid command length. Usage example: window w");
 	   } else if (inputLine[0].equals("connect")) connect();
 	   else if (inputLine[0].equals("disconnect")) disconnect();
 	   else System.out.println("Invalid command.");
@@ -62,22 +65,26 @@ public class FXAClient {
  * @
  */
  public static void get(String fileName){
-
+	 System.out.println("Log: get called with file name: " + fileName);
  }
   /*
   * Upload files to server from client
   * @
   */
  public static void post(String fileName){
-
+	 System.out.println("Log: post called with file name: " + fileName);
+ }
+ 
+ public static void window(String windowSize){
+	 System.out.println("Log: window called with windowSize: " + windowSize);
  }
  
  public static void connect(){
-	 
+	 System.out.println("Log: connect called");
  }
  
  public static void disconnect() {
-	 
+	 System.out.println("Log: disconnect called");
  }
 
 
