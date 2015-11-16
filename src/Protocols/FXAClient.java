@@ -18,6 +18,8 @@ import java.net.InetAddress;
 
 public class FXAClient {
 
+  static RXPClient client;
+	
   public static void main (String[] args) throws Exception {
 
    if (args.length != 3) {
@@ -54,7 +56,7 @@ public class FXAClient {
 	   } else if (inputLine[0].equals("window")) {
 		   if(inputLine.length == 2) window(inputLine[1]);
 		   else System.out.println("Invalid command length. Usage example: window w");
-	   } else if (inputLine[0].equals("connect")) connect();
+	   } else if (inputLine[0].equals("connect")) connect(IPAddress, hostPort, destinationPort);
 	   else if (inputLine[0].equals("disconnect")) disconnect();
 	   else System.out.println("Invalid command.");
    }
@@ -79,8 +81,15 @@ public class FXAClient {
 	 System.out.println("Log: window called with windowSize: " + windowSize);
  }
  
- public static void connect(){
+ public static void connect(InetAddress IPAddress, int hostPort, int destinationPort){
 	 System.out.println("Log: connect called");
+	 
+	 try {
+		 client = new RXPClient(InetAddress.getLocalHost().toString(), IPAddress.toString(), (short) hostPort, (short) destinationPort);
+		 client.connect();
+	 } catch(Exception e) {
+		 
+	 }
  }
  
  public static void disconnect() {

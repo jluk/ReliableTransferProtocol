@@ -3,6 +3,7 @@ package Protocols;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.zip.Adler32;
 import RxpPacket.*;
 
@@ -56,6 +57,10 @@ public class RXPClient {
 
     //Send data to server
     public int sendData(byte[] data) throws IOException, ClassNotFoundException{
+    	
+    	//Dummy code to test NetEmu message relay
+    	DatagramPacket toSend = new DatagramPacket(data, data.length, InetAddress.getByName(destIP), destPort);
+    	clientSocket.send(toSend);
 
         return 0;
     }
