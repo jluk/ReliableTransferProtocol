@@ -31,7 +31,7 @@ public class RXPServer {
     }
 
     //Init and listen for connection requests
-    public int startRxPServer() throws IOException, ClassNotFoundException{
+    public int startRXPServer() throws IOException, ClassNotFoundException{
 
         return connectionState;
     }

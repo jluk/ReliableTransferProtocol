@@ -37,17 +37,24 @@ public class RXPClient {
         packetFactory = new RXPClientPacketFactory();
     }
 
-    //Attempt to establish connection with RXPServer
+    /*
+     * Attempt to connect RXPClient to RXPServer
+     *
+     * @return connection code of final transaction
+     */
     public int connect() throws IOException, ClassNotFoundException{
 
         if(connectionState != 0) return -1;
         clientSocket = new DatagramSocket(sourcePort);
-        //packetSent = packetFactory.createConnectionPacket(sourceIP, destIP, destPort, sourcePort);
+        packetSent = packetFactory.createConnectionPacket(sourceIP, destIP, destPort, sourcePort);
         sendPacket(packetSent);
         packetRecv = recvPacket(packetSent);
 
+        //Check to drop any packet other than the one we are expecting
         if(packetRecv.getPacketHeader().getAckNumber() != (packetSent.getPacketHeader().getSeqNumber() + 1)) return -1;
-        //packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
+
+        //Build response packet
+        packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
         sendPacket(packetSent);
         packetRecv = recvPacket(packetSent);
         connectionState = packetRecv.getPacketHeader().getConnectionCode();

@@ -1,9 +1,9 @@
 package Protocols;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.util.Scanner;
 
 /**
  * Created by justinluk1 on 11/10/15.
@@ -19,98 +19,144 @@ import java.net.InetAddress;
 
 public class FXAClient {
 
-  static RXPClient client;
-	
-  public static void main (String[] args) throws Exception {
+	private static short clientPort;
+	private static short netEmuPort;
+	private static String ipAddress;
 
-   if (args.length != 3) {
-    System.out.println("Invalid number of arguments. Correct usage involves three command-line arguments, \"fta-client X A P\".");
-    System.out.println("X: the port number at which the FxA-clientâ€™s UDP socket should bind to (even number). This port number should be equal to the serverâ€™s port number minus 1");
-    System.out.println("A: the IP address of NetEmu");
-    System.out.println("P: the UDP port number of NetEmu");
-    System.exit(0);
-   }
 
-   int hostPort = Integer.parseInt(args[0]);
-   InetAddress IPAddress = InetAddress.getByName(args[1]);
-   int destinationPort = Integer.parseInt(args[2]);
+	public static void main (String[] args) throws Exception {
 
-   System.out.println("File Transfer Protocol Client started.");
-   
-   BufferedReader stdIn = new BufferedReader( new InputStreamReader(System.in));
-
-   // RUNNING BLOCK
-   while (true) {
-	   String input;
-	   
-	   //Block until != null
-	   while((input = stdIn.readLine()) == null);
-
-	   String[] inputLine = input.split("\\s");
-	   
-	   if(inputLine[0].equals("get")) {
-		   if(inputLine.length == 2) get(inputLine[1]);
-		   else System.out.println("Invalid command length. Usage example: get F");
-	   } else if (inputLine[0].equals("post")) {
-		   if(inputLine.length == 2) post(inputLine[1]);
-		   else System.out.println("Invalid command length. Usage example: post F");
-	   } else if (inputLine[0].equals("window")) {
-		   if(inputLine.length == 2) window(inputLine[1]);
-		   else System.out.println("Invalid command length. Usage example: window w");
-	   } else if (inputLine[0].equals("connect")) connect(IPAddress, hostPort, destinationPort);
-	   else if (inputLine[0].equals("disconnect")) disconnect();
-	   else System.out.println("Invalid command.");
-   }
-  }
-
- /*
- * Download files from server to client
- * @
- */
- public static void get(String fileName){
-	 System.out.println("Log: get called with file name: " + fileName);
-	 
-	 if(client != null) {
-		 String msg = "test";
-		 try {
-			client.sendData(msg.getBytes());
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (args.length!=4||!args[0].equals("FxA-client")){
+			System.out.println("The arguments entered were invalid. Exiting.");
+			System.exit(0);
 		}
-	 } else {
-		 System.out.println("Error: You must use the connect command before using get.");
+
+		try{
+			clientPort = Short.parseShort(args[1]);
+		}
+		catch(NumberFormatException ex){
+			System.out.println("Port number must be an int. Exiting.");
+			System.exit(0);
+		}
+		ipAddress = args[2];
+
+		try{
+			netEmuPort = Short.parseShort(args[3]);
+		}
+		catch(NumberFormatException ex){
+			System.out.println("Port number was invalid. Exiting.");
+			System.exit(0);
+		}
+
+		RXPClient client = new RXPClient("localhost", ipAddress, clientPort, netEmuPort);
+
+		Scanner scan = new Scanner(System.in);
+
+	   	System.out.println("File Transfer Protocol Client started.");
+
+
+		// RUNNING BLOCK
+		while (true) {
+
+		   String nextLine = scan.nextLine();
+		   String[] input = nextLine.split(" ");
+
+		   //One Word input
+		   if (input.length == 1) {
+
+			   //CONNECT
+			   if (nextLine.equals("connect")) {
+				   client.connect();
+			   }
+
+			   //DISCONNECT
+			   else if (nextLine.equals("disconnect")) {
+				   client.close();
+				   scan.close();
+			   } else {
+				   System.out.println("Invalid input.");
+			   }
+		   }
+
+		   //Two Word Inputs
+		   else if (input.length == 2) {
+
+			   //GET
+			   if (input[0].equals("get")) {
+				   String filename = input[1];
+				   System.out.println("Looking for file: " + filename);
+				   String request = "GET*" + filename;
+				   byte[] ret = client.getData(request.getBytes());
+
+				   if (ret.length != 0) {
+					   System.out.println("Writing file: " + filename);
+					   FileOutputStream fos = new FileOutputStream(filename);
+					   fos.write(ret);
+					   fos.close();
+					   System.out.println("GET Completed Successfully!");
+				   } else {
+					   System.out.println("GET Failed");
+				   }
+			   }
+
+			   //POST
+			   else if (input[0].equals("post")) {
+				   String filename = input[1];
+				   byte[] rqst = client.getData(("POST*" + filename).getBytes());
+				   String r = new String(rqst);
+				   System.out.println("Sent post notice.");
+
+				   if (r.equals("!")) {
+					   String fRqst = System.getProperty("user.dir") + "\\" + filename;
+					   System.out.println("Searching for filepath: " + fRqst);
+					   File f = new File(fRqst);
+					   if (f.exists()) {
+						   byte[] fileIn = new byte[Files.readAllBytes(f.toPath()).length];
+						   fileIn = Files.readAllBytes(f.toPath());
+						   client.sendData(fileIn);
+					   } else {
+						   System.out.println("File was not found.");
+						   client.sendData(new byte[0]);
+					   }
+				   } else {
+					   System.out.println("Incorrect request received.");
+				   }
+			   } else {
+				   System.out.println("Invalid input.");
+			   }
+		   }
+	   }
+  	}
+
+	 /*
+	 * Download files from server to client
+	 * @
+	 */
+	 public static void get(String fileName){
+		 System.out.println("Log: get called with file name: " + fileName);
+
 	 }
- }
-  /*
-  * Upload files to server from client
-  * @
-  */
- public static void post(String fileName){
-	 System.out.println("Log: post called with file name: " + fileName);
- }
- 
- public static void window(String windowSize){
-	 System.out.println("Log: window called with windowSize: " + windowSize);
- }
- 
- public static void connect(InetAddress IPAddress, int hostPort, int destinationPort){
-	 System.out.println("Log: connect called");
-	 
-	 try {
-		 client = new RXPClient(InetAddress.getLocalHost().toString(), IPAddress.toString(), (short) hostPort, (short) destinationPort);
-		 client.connect();
-	 } catch(Exception e) {
-		 
+
+	  /*
+	  * Upload files to server from client
+	  * @
+	  */
+	 public static void post(String fileName){
+		 System.out.println("Log: post called with file name: " + fileName);
 	 }
- }
+
+	 public static void window(String windowSize){
+		 System.out.println("Log: window called with windowSize: " + windowSize);
+	 }
+
+	 public static void connect(InetAddress IPAddress, int hostPort, int destinationPort){
+		 System.out.println("Log: connect called");
+
+	 }
  
- public static void disconnect() {
-	 System.out.println("Log: disconnect called");
- }
+	 public static void disconnect() {
+		 System.out.println("Log: disconnect called");
+	 }
 
 
 }
