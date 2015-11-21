@@ -1,4 +1,4 @@
-package RxpPacket;
+package Protocols;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -156,17 +156,28 @@ public class RXPHeader {
     public void byteToHeader(byte[] packet){
 
         //Repack the given byte[]
+
+        //32 bits
         checksum = (packet[0]<<24)&0xff000000|(packet[1]<<16)&0x00ff0000|(packet[2]<< 8)&0x0000ff00|(packet[3]<< 0)&0x000000ff;
+        //32 bits
         packetSize = (packet[4]<<24)&0xff000000|(packet[5]<<16)&0x00ff0000|(packet[6]<< 8)&0x0000ff00|(packet[7]<< 0)&0x000000ff;
+        //32 bits
         dataSize = (packet[8]<<24)&0xff000000|(packet[9]<<16)&0x00ff0000|(packet[10]<< 8)&0x0000ff00|(packet[11]<< 0)&0x000000ff;
+        //32 bits
         seqNumber = (packet[12]<<24)&0xff000000|(packet[13]<<16)&0x00ff0000|(packet[14]<< 8)&0x0000ff00|(packet[15]<< 0)&0x000000ff;
+        //32 bits
         ackNumber = (packet[16]<<24)&0xff000000|(packet[17]<<16)&0x00ff0000|(packet[18]<< 8)&0x0000ff00|(packet[19]<< 0)&0x000000ff;
+        //32 bits
         connectionCode = (packet[20]<<24)&0xff000000|(packet[21]<<16)&0x00ff0000|(packet[22]<< 8)&0x0000ff00|(packet[23]<< 0)&0x000000ff;
+        //16 bits
         destPort = (short) ((packet[24]<< 8)&0xff00|(packet[25]<< 0)&0x00ff);
+        //16 bits
         sourcePort = (short) ((packet[26]<< 8)&0xff00|(packet[27]<< 0)&0x00ff);
 
         //Handle varying IP Address lengths
+        //32 bits
         int sourceIPLength = (packet[28]<<24)&0xff000000|(packet[29]<<16)&0x00ff0000|(packet[30]<< 8)&0x0000ff00|(packet[31]<< 0)&0x000000ff;
+        //32 bits
         int destIPLength = (packet[32]<<24)&0xff000000|(packet[33]<<16)&0x00ff0000|(packet[34]<< 8)&0x0000ff00|(packet[35]<< 0)&0x000000ff;
         sourceIP = new String(Arrays.copyOfRange(packet, 36, 36 + sourceIPLength));
         destIP = new String(Arrays.copyOfRange(packet, 36 + sourceIPLength, 36 + sourceIPLength + destIPLength));

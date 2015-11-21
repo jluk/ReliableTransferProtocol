@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ReliableTransferProtocol:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ReliableTransferProtocol_jar</output-path>
+    <root id="archive" name="ReliableTransferProtocol.jar">
+      <element id="module-output" name="ReliableTransferProtocol" />
+    </root>
+  </artifact>
+</component>

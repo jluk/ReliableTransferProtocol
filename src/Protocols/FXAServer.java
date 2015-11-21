@@ -4,20 +4,23 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.util.Scanner;
 
 /**
  * Created by justinluk1 on 11/10/15.
  *
  * FxA SERVER
- â—� Command-line: FxA-server X A P
- The command-line arguments are:
- X: the port number at which the FxA-serverâ€™s UDP socket should bind to (odd number)
- A: the IP address of NetEmu
- P: the UDP port number of NetEmu
- â—� Command: window W (only for projects that support pipelined and bi- directional transfers)
- W: the maximum receiverâ€™s window-size at the FxA-Server (in segments).
- â—� Command: terminate Shut-down FxA-Server gracefully.
+ * Command-line: FxA-server X A P
+ * X: the port number at which the FxA-serverâ€™s UDP socket should bind to (odd number)
+ * A: the IP address of NetEmu
+ * P: the UDP port number of NetEmu
+ *
+ * Command: window W (only for projects that support pipelined and bi- directional transfers)
+ * W: the maximum receiver's window-size at the FxA-Server (in segments).
+ *
+ * Command: terminate Shut-down FxA-Server gracefully.
  */
 
 public class FXAServer {
@@ -36,7 +39,6 @@ public class FXAServer {
 		try{
 			serverPort = Short.parseShort(args[1]);
 
-			//Check for odd server port number
 			if ((serverPort & 1)!=1){
 				System.out.println("Server port number must be odd. Exiting.");
 				System.exit(1);
@@ -49,6 +51,7 @@ public class FXAServer {
 		}
 		ipAddress = args[2];
 
+
 		RXPServer server = new RXPServer("localhost", ipAddress, serverPort, netEmuPort);
 		server.startRXPServer();
 
@@ -57,18 +60,14 @@ public class FXAServer {
 		boolean run = true;
 		String nextLine = "";
 		byte[] request = null;
-
-		// RUNNING BLOCK
 		while(run){
 			request = server.runServer();
 			if (request!= null){
 				System.out.println("Receiving request from client.");
 				String val = new String(request);
-
-				//GET
 				if (val.indexOf("GET*")!=-1){
 					String fRqst = val.substring(4);
-					fRqst = System.getProperty("user.dir")+"\\"+ fRqst;
+					fRqst = System.getProperty("user.dir")+"/"+ fRqst;
 					System.out.println("Searching for filepath: "+fRqst);
 					File f = new File(fRqst);
 					if (f.exists()){
@@ -81,8 +80,6 @@ public class FXAServer {
 						server.sendData(new byte[0]);
 					}
 				}
-
-				//POST
 				else if (val.indexOf("POST*")!=-1){
 					String fname = val.substring(5);
 					byte[] serverResponse = "!".getBytes();
@@ -98,21 +95,19 @@ public class FXAServer {
 						while(clientResponse == null);
 
 						if (clientResponse.length != 0){
-							System.out.println("Post was successful.");
+							System.out.println("Post was sucessful.");
 							FileOutputStream fos = new FileOutputStream(fname);
 							fos.write(clientResponse);
 							fos.close();
 						}
 						else{
-							System.out.println("Post failed.");
+							System.out.println("Post was unsucessful.");
 						}
 					}
 					else{
 						System.out.println("Unable to send resposne.");
 					}
 				}
-
-				//INVALID INPUT
 				else{
 					System.out.println("Invalid Request.");
 					server.sendData(new byte[0]);
@@ -149,5 +144,4 @@ public class FXAServer {
 			}
 		}
 	}
-
 }

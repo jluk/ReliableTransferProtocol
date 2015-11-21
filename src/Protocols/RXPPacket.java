@@ -1,9 +1,9 @@
-package RxpPacket;
+package Protocols;
 
 /**
  * Created by justinluk1 on 11/10/15.
  *
- * Class to define behavior of an RxpPacket.RXPPacket
+ * Class to define behavior of an Protocols.RXPPacket
  */
 public class RXPPacket {
 
@@ -25,12 +25,12 @@ public class RXPPacket {
     }
 
     //Header setter if given byte[]
-    public void setRxPPacketHeader(byte[] data){
+    public void setRXPPacketHeader(byte[] data){
         packetHeader.byteToHeader(data);
     }
 
-    //Header setter if given RxpPacket.RXPHeader object
-    public void setRxPPacketHeader(RXPHeader header){
+    //Header setter if given Protocols.RXPHeader object
+    public void setRXPPacketHeader(RXPHeader header){
         packetHeader = header;
     }
 
