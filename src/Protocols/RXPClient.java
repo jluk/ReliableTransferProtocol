@@ -79,7 +79,7 @@ public class RXPClient {
 
         if(connectionState != 201) return -1; //201 = connected
 
-        //Tell server we are making a request to download
+        //Tell server we are making a request
         packetSent = packetFactory.createPutRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length); //CC 700
         sendPacket(packetSent);
         packetRecv = recvPacket();

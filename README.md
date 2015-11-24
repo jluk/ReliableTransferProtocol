@@ -39,9 +39,39 @@ RxpPacket Package
 * RXPPacket.java
 - Data model to hold packet header and data
 
-Instructions to run
+Instructions to run - In this example we use 15888 and 15889 as example client and server ports
+
+Open up a terminal and run NetEmu with python NetEmu.py 5000. 
+Open up another terminal and navigate to the location of FxA-server.jar. 
+Open up another terminal and navigate to the location of FxA-client.jar. 
+In the first terminal, type: "java -jar FxA-server.jar FxA-server 15888 127.0.0.1 5000". 
+In the second terminal, type: "java -jar FxA-client.jar FxA-client 15889 127.0.0.1 5000". 
+To connect the client to the server, type "connect" in the client's terminal. 
+To get a file from the server, type: "get example.txt". 
+To post a file to the server, type: "post example.txt". To disconnect the client from the server, type: "disconnect".
+Note: files to transport must be in the same directory as the respective jar file.
 
 Updated Protocol
+RxPClient(String sourceIP, String destIP, short sourceDest, short destPort)
+-This constructor is call by a host to create a client RxP instance. The method tries to initializes and returns the RxPClient object.
+RxPClient.connect()
+-This method is called by the RxP client instance to try and connect to the RxP server instance at destIP:destPort.
+int RxPClient.sendData( byte data[])
+-This method will try to send an array of bytes from the data buffer over the connection made by the RxP client and server. If successful, it will return 0, otherwise it will return with an error code.
+Byte[] RxPClient.getData(byte data[])
+-This method will request to receive data from the RxP server instance. If successful the data will be returned in a byte array.
+void RxPClient.close()
+-This method will send a close request to the RxP server instance and close itself.
+RxPServer(String sourceIP, String destIP, short sourceDest, short destPort)
+-This constructor is call by a host to create a server RxP instance. The method tries to initializes and returns the RxPServer object.
+RxPServer.startRxPServer()
+-This method is called by the RxP server instance to bind to sourcePort and wait to receive a connection.
+int RxPServer.runServer( byte data[])
+-once a connection is established, this method is called to listed to requests from the RxP client instance.
+int RxPServer.sendData(byte data[])
+-Upon a getData request from the RxP client instance, this method send the requested data to the client.
+void RxPServer.close()
+-This method will send a close request to the RxP client instance and close itself.
 
 API Description
 

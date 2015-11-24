@@ -95,17 +95,17 @@ public class FXAServer {
 						while(clientResponse == null);
 
 						if (clientResponse.length != 0){
-							System.out.println("Post was sucessful.");
+							System.out.println("Post was successful.");
 							FileOutputStream fos = new FileOutputStream(fname);
 							fos.write(clientResponse);
 							fos.close();
 						}
 						else{
-							System.out.println("Post was unsucessful.");
+							System.out.println("Post was unsuccessful.");
 						}
 					}
 					else{
-						System.out.println("Unable to send resposne.");
+						System.out.println("Unable to send response.");
 					}
 				}
 				else{
