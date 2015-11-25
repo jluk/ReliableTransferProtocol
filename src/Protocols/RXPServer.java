@@ -99,18 +99,18 @@ public class RXPServer {
         sendPacket(packetSent); //CC 201
         
         //HAMYChange - Shitty attempt to ensure 201 gets there
-        /*attempt = 0;
+        attempt = 0;
         while(packetRecv.getPacketHeader().getConnectionCode() == 200) {
         	attempt++;
        	
         	try{
         		packetRecv = recvPacket();
         	} catch(SocketTimeoutException e) {
-        		if(attempt>100) break;
+        		if(attempt>15) break;
         		sendPacket(packetSent); //Sending CC 101
         		continue;
         	}
-        } */
+        }
         
         System.out.println(packetSent.toString());
 
@@ -189,6 +189,8 @@ public class RXPServer {
         		System.out.println("Server: packetRecv Seq num: " + packetRecv.getPacketHeader().getSeqNumber());
         		System.out.println("Server: ackNum: " + ackNum);
         	}
+        	
+        	
         	
         	
         	//HAMYChange

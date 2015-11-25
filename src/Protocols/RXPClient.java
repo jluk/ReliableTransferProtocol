@@ -222,6 +222,13 @@ public class RXPClient {
         int dataPosition = 0;
         while(dataPosition < packetSent.getPacketHeader().getDataSize()){
         	while(packetRecv.getPacketHeader().getSeqNumber() != (ackNum - 1)){
+        		
+        		if(packetRecv.getPacketHeader().getSeqNumber() <= (ackNum - 1)) {
+        			//ACK the sent packet so server knows we've already gotten it.
+        			sendPacket(packetFactory.createClientRequestPacket(sourceIP, destIP, destPort, sourcePort,
+                    packetRecv.getPacketHeader().getDataSize(), packetRecv.getPacketHeader().getSeqNumber() + 1));
+        		}
+        		
         		try {
         			packetRecv = recvPacket();
         		} catch (SocketTimeoutException e) {
