@@ -45,8 +45,8 @@ In this example we use 15888 and 15889 as example client and server ports
 1. Open up a terminal and run NetEmu with python NetEmu.py 5000. 
 2. Open up another terminal and navigate to the location of FxA-server.jar. 
 3. Open up another terminal and navigate to the location of FxA-client.jar. 
-4. In the first terminal, type: "java -jar FxA-server.jar FxA-server 15888 127.0.0.1 5000". 
-5. In the second terminal, type: "java -jar FxA-client.jar FxA-client 15889 127.0.0.1 5000". 
+4. In the first terminal, type: "java -jar FxA-server.jar FxA-server 15889 127.0.0.1 5000". 
+5. In the second terminal, type: "java -jar FxA-client.jar FxA-client 15888 127.0.0.1 5000". 
 6. To connect the client to the server, type "connect" in the client's terminal. 
 7. To get a file from the server, type: "get example.txt". 
 8. To post a file to the server, type: "post example.txt". To disconnect the client from the server, type: "disconnect".
