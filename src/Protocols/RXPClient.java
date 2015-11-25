@@ -56,7 +56,19 @@ public class RXPClient {
         packetSent = packetFactory.createConnectionPacket(sourceIP, destIP, destPort, sourcePort); //CC 100
         sendPacket(packetSent);
         System.out.println(packetSent.toString());
-        packetRecv = recvPacket(); //CC 101
+        packetRecv = recvPacket();
+        int attempt = 0;
+        while( packetRecv.getPacketHeader().getConnectionCode() != 101 ) {
+        	//HAMYChange - may not need the maxAttempt
+        	if(attempt >= 10) {
+        		System.out.println("Couldn't connect to server.");
+        		System.exit(1);
+        	}
+        	sendPacket(packetSent); //Sending CC 100
+        	attempt++;
+        	
+        	packetRecv = recvPacket();
+        } 
         System.out.println(packetRecv.toString());
 
         //Check to drop any packet out of expected sequence
@@ -67,6 +79,20 @@ public class RXPClient {
         System.out.println(packetSent.toString());
 
         packetRecv = recvPacket(); //CC 201 = connected
+        
+        attempt = 0;
+        while( packetRecv.getPacketHeader().getConnectionCode() != 201 ) {
+        	//HAMYChange - may not need the maxAttempt
+        	if(attempt >= 10) {
+        		System.out.println("Couldn't connect to server.");
+        		System.exit(1);
+        	}
+        	sendPacket(packetSent);
+        	attempt++;
+        	
+        	packetRecv = recvPacket();
+        }
+        
         System.out.println(packetRecv.toString());
 
         connectionState = packetRecv.getPacketHeader().getConnectionCode();

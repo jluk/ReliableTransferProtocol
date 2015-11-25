@@ -46,6 +46,11 @@ public class RXPServer {
         System.out.println("Awaiting connection...");
 
         packetRecv = recvPacket();
+        
+        while( packetRecv.getPacketHeader().getConnectionCode() != 100 ) {
+        	packetRecv = recvPacket();
+        } 
+        
         System.out.println(packetRecv.toString());
 
         packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
@@ -53,6 +58,13 @@ public class RXPServer {
         System.out.println(packetSent.toString());
 
         packetRecv = recvPacket(); //CC 200
+        
+        while( packetRecv.getPacketHeader().getConnectionCode() != 200 ) {
+        	sendPacket(packetSent); //Sending CC 101
+        	
+        	packetRecv = recvPacket();
+        } 
+        
         System.out.println(packetRecv.toString());
 
         if(packetRecv.getPacketHeader().getAckNumber() != packetSent.getPacketHeader().getSeqNumber() + 1) return -1;
