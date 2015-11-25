@@ -99,7 +99,7 @@ public class RXPServer {
         sendPacket(packetSent); //CC 201
         
         //HAMYChange - Shitty attempt to ensure 201 gets there
-        attempt = 0;
+        /*attempt = 0;
         while(packetRecv.getPacketHeader().getConnectionCode() == 200) {
         	attempt++;
        	
@@ -110,7 +110,7 @@ public class RXPServer {
         		sendPacket(packetSent); //Sending CC 101
         		continue;
         	}
-        } 
+        } */
         
         System.out.println(packetSent.toString());
 

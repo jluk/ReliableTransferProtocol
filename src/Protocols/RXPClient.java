@@ -38,7 +38,7 @@ public class RXPClient {
         this.connectionState = 0;
         adler = new Adler32();
         windowSize = 1;
-        rcvTimeout = 500; //0.5 secs
+        rcvTimeout = 1000; //0.5 secs
         packetFactory = new RXPClientPacketFactory();
     }
 
@@ -87,6 +87,7 @@ public class RXPClient {
         sendPacket(packetSent); //CC 200
         System.out.println(packetSent.toString());
 
+        
         attempt = 0;
         while( packetRecv.getPacketHeader().getConnectionCode() != 201 ) {
         	//HAMYChange - may not need the maxAttempt
