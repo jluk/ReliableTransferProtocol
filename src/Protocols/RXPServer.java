@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.zip.Adler32;
 
@@ -23,6 +24,7 @@ public class RXPServer {
     private RXPServerPacketFactory packetFactory;
     private Adler32 adler;
     private int windowSize;
+    private int rcvTimeout;
 
     private RXPPacket packetSent;
     private RXPPacket packetRecv;
@@ -35,6 +37,7 @@ public class RXPServer {
         this.connectionState = 0;
         adler = new Adler32();
         windowSize = 1;
+        rcvTimeout = 500; //0.5 secs
         packetFactory = new RXPServerPacketFactory();
     }
 
@@ -47,8 +50,22 @@ public class RXPServer {
 
         packetRecv = recvPacket();
         
+        serverSocket.setSoTimeout(rcvTimeout);
+        int attempt = 0;
         while( packetRecv.getPacketHeader().getConnectionCode() != 100 ) {
-        	packetRecv = recvPacket();
+        	//HAMYChange - may not need the maxAttempt
+        	/*if(attempt >= 10) {
+        		System.out.println("Couldn't connect to server.");
+        		System.exit(1);
+        	}
+
+        	attempt++; */
+        	try{
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		sendPacket(packetSent); //Sending CC 101
+        		continue;
+        	}
         } 
         
         System.out.println(packetRecv.toString());
@@ -57,12 +74,21 @@ public class RXPServer {
         sendPacket(packetSent); //CC 101
         System.out.println(packetSent.toString());
 
-        packetRecv = recvPacket(); //CC 200
-        
+        attempt = 0;
         while( packetRecv.getPacketHeader().getConnectionCode() != 200 ) {
-        	sendPacket(packetSent); //Sending CC 101
-        	
-        	packetRecv = recvPacket();
+        	//HAMYChange - may not need the maxAttempt
+        	/*if(attempt >= 10) {
+        		System.out.println("Couldn't connect to server.");
+        		System.exit(1);
+        	}
+
+        	attempt++; */
+        	try{
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		sendPacket(packetSent); //Sending CC 101
+        		continue;
+        	}
         } 
         
         System.out.println(packetRecv.toString());
@@ -71,9 +97,29 @@ public class RXPServer {
 
         packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
         sendPacket(packetSent); //CC 201
+        
+        //HAMYChange - Shitty attempt to ensure 201 gets there
+        attempt = 0;
+        while(packetRecv.getPacketHeader().getConnectionCode() == 200) {
+        	attempt++;
+       	
+        	try{
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		if(attempt>100) break;
+        		sendPacket(packetSent); //Sending CC 101
+        		continue;
+        	}
+        } 
+        
         System.out.println(packetSent.toString());
 
         connectionState = packetSent.getPacketHeader().getConnectionCode();
+        
+        if(connectionState == 201) System.out.println("Connection established...");
+        
+        //Set timeout back to infinity
+        serverSocket.setSoTimeout(0);
 
         return connectionState;
     }

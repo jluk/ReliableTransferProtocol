@@ -5,6 +5,7 @@ import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.zip.Adler32;
 
@@ -24,6 +25,7 @@ public class RXPClient {
     private Adler32 adler;
     private RXPClientPacketFactory packetFactory;
     private int windowSize;
+    private int rcvTimeout;
 
     private RXPPacket packetSent;
     private RXPPacket packetRecv;
@@ -36,6 +38,7 @@ public class RXPClient {
         this.connectionState = 0;
         adler = new Adler32();
         windowSize = 1;
+        rcvTimeout = 500; //0.5 secs
         packetFactory = new RXPClientPacketFactory();
     }
 
@@ -56,18 +59,24 @@ public class RXPClient {
         packetSent = packetFactory.createConnectionPacket(sourceIP, destIP, destPort, sourcePort); //CC 100
         sendPacket(packetSent);
         System.out.println(packetSent.toString());
-        packetRecv = recvPacket();
+        packetRecv = new RXPPacket();
+        
+        clientSocket.setSoTimeout(rcvTimeout);
         int attempt = 0;
         while( packetRecv.getPacketHeader().getConnectionCode() != 101 ) {
         	//HAMYChange - may not need the maxAttempt
-        	if(attempt >= 10) {
+        	/*if(attempt >= 10) {
         		System.out.println("Couldn't connect to server.");
         		System.exit(1);
         	}
-        	sendPacket(packetSent); //Sending CC 100
-        	attempt++;
-        	
-        	packetRecv = recvPacket();
+
+        	attempt++;*/
+        	try{
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		sendPacket(packetSent); //Sending CC 100
+        		continue;
+        	}
         } 
         System.out.println(packetRecv.toString());
 
@@ -78,24 +87,29 @@ public class RXPClient {
         sendPacket(packetSent); //CC 200
         System.out.println(packetSent.toString());
 
-        packetRecv = recvPacket(); //CC 201 = connected
-        
         attempt = 0;
         while( packetRecv.getPacketHeader().getConnectionCode() != 201 ) {
         	//HAMYChange - may not need the maxAttempt
-        	if(attempt >= 10) {
+        	if(attempt >= 100) {
         		System.out.println("Couldn't connect to server.");
         		System.exit(1);
         	}
-        	sendPacket(packetSent);
+
         	attempt++;
-        	
-        	packetRecv = recvPacket();
-        }
+        	try{
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		sendPacket(packetSent); //Sending CC 200
+        		continue;
+        	}
+        } 
         
         System.out.println(packetRecv.toString());
 
         connectionState = packetRecv.getPacketHeader().getConnectionCode();
+        
+        //Reset socket timeout
+        clientSocket.setSoTimeout(0);
 
         return connectionState;
     }
@@ -190,6 +204,7 @@ public class RXPClient {
 
         //Store datagramPacket in byte[]
         recvPacket = new DatagramPacket(recv, recv.length);
+        
         clientSocket.receive(recvPacket);
 
         //Build an RXPPacket with datagramPacket

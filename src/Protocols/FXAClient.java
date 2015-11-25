@@ -58,7 +58,8 @@ public class FXAClient {
 			String[] input = nextLine.split(" ");
 			if (input.length==1){
 				if(nextLine.equals("connect")){
-					client.connect();
+					if(client.connect() == 201) System.out.println("Connection to server established successfully.");
+					else System.out.println("There was an issue connecting to the server.");
 				}
 				else if (nextLine.equals("disconnect")){
 					client.close();
