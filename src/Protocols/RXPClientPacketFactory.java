@@ -102,7 +102,33 @@ public class RXPClientPacketFactory {
                 packetHeader.setSeqNumber(Math.abs(rand.nextInt()));
                 packetHeader.setAckNumber(packetRecvd.getPacketHeader().getSeqNumber() + 1);
                 break;
-
+             
+            //Getting data from server
+            case 705:
+            	packetHeader.setDataSize(packetRecvd.getPacketHeader().getDataSize());
+                packetHeader.setPacketSize(0);
+                packetHeader.setConnectionCode(706);
+                packetHeader.setSourceIP(sourceIP);
+                packetHeader.setSourcePort(sourcePort);
+                packetHeader.setDestIP(packetRecvd.getPacketHeader().getDestIP());
+                packetHeader.setDestPort(packetRecvd.getPacketHeader().getDestPort());
+                packetHeader.setSeqNumber(Math.abs(rand.nextInt()));
+                packetHeader.setAckNumber(packetRecvd.getPacketHeader().getSeqNumber() + 1);
+                break;
+                
+            //Sending data to server    
+            case 706:
+            	packetHeader.setDataSize(packetRecvd.getPacketHeader().getDataSize());
+                packetHeader.setPacketSize(0);
+                packetHeader.setConnectionCode(705);
+                packetHeader.setSourceIP(sourceIP);
+                packetHeader.setSourcePort(sourcePort);
+                packetHeader.setDestIP(packetRecvd.getPacketHeader().getDestIP());
+                packetHeader.setDestPort(packetRecvd.getPacketHeader().getDestPort());
+                packetHeader.setSeqNumber(packetRecvd.getPacketHeader().getAckNumber() + 1);
+                packetHeader.setAckNumber(Math.abs(rand.nextInt()));
+                break;
+                
             default:
                 break;
         }
