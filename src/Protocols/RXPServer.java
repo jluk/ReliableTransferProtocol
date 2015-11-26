@@ -129,15 +129,8 @@ public class RXPServer {
     public byte[] runServer() throws ClassNotFoundException, IOException{
         if(connectionState != 201) return null;
         
-        int attempt = 0;
-        while(packetRecv.getPacketHeader().getConnectionCode() != 700) {
-        	try {
-        		packetRecv = recvPacket();
-        	} catch(SocketTimeoutException e) {
-        		if(attempt>10) return null;
-        		attempt++;
-        	}
-        }
+        serverSocket.setSoTimeout(0);
+        packetRecv = recvPacket();
         
         //Request to send data to client
         if(packetRecv.getPacketHeader().getConnectionCode() == 700){
@@ -221,6 +214,8 @@ public class RXPServer {
         packetSent = packetFactory.createPutRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length);
         sendPacket(packetSent);
         
+        packetRecv = new RXPPacket();
+        
         int attempt = 0;
         while(packetRecv.getPacketHeader().getConnectionCode() != 701) {
         	try{
@@ -230,6 +225,9 @@ public class RXPServer {
         		sendPacket(packetSent);
         		continue;
         	}
+        	
+        	//HAMYChange
+        	System.out.println("Waiting on CC 701 from Client...");
         	
         	attempt++;
         }
@@ -242,6 +240,11 @@ public class RXPServer {
         packetSent = packetFactory.createSendRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length, 0, (512 - packetSent.getPacketHeader().getHeaderSize()) >= data.length ? data.length : 512 - packetSent.getPacketHeader().getHeaderSize());
 
         while(dataPosition < data.length){
+        	
+        	//HAMYChange
+        	System.out.println("ServerSend: dataPosition:" + dataPosition);
+        	System.out.println("ServerSend: dataLength:" + data.length);
+        	
             packetSent.setData(Arrays.copyOfRange(data, dataPosition, dataPosition + packetSent.getPacketHeader().getPacketSize()));
             sendPacket(packetSent);
             
@@ -264,6 +267,8 @@ public class RXPServer {
             seqNum+=2;
         }
         serverSocket.setSoTimeout(0);
+        //HAMYChange
+        System.out.println("Server Messages Sent...");
         return 0;
     }
 

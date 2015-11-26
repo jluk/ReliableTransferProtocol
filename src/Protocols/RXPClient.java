@@ -202,6 +202,9 @@ public class RXPClient {
     			sendPacket(packetSent);
     			continue;
     		}
+    		
+    		//HAMYChange
+    		System.out.println("Waiting on CC 700 from server...");
     	}
     	
     	int ackNum = 1;
