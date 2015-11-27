@@ -99,6 +99,7 @@ public class RXPClient {
 
             packetRecv = recvPacket();
             dataPosition = packetRecv.getPacketHeader().getAckNumber();
+            System.out.println(dataPosition + " " + data.length);
             packetSent = packetFactory.createSendRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length, packetRecv.getPacketHeader().getAckNumber(),
                     (512 - packetSent.getPacketHeader().getHeaderSize()) >= data.length -  dataPosition ? data.length - dataPosition : 512 - packetSent.getPacketHeader().getHeaderSize());
         }
