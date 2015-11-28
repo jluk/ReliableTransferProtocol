@@ -196,10 +196,11 @@ public class RXPClient {
     	clientSocket.setSoTimeout(rcvTimeout);
     	
     	while(packetRecv.getPacketHeader().getConnectionCode() != 700) {
+    		sendPacket(packetSent);
+    		
     		try { 
     			packetRecv = recvPacket();
     		} catch (SocketTimeoutException e) {
-    			sendPacket(packetSent);
     			continue;
     		}
     		
@@ -213,10 +214,11 @@ public class RXPClient {
         packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
         
         while(packetRecv.getPacketHeader().getConnectionCode() == 700) {
+        	sendPacket(packetSent);
+        	
         	try {
         		packetRecv = recvPacket();
         	} catch (SocketTimeoutException e) {
-        		sendPacket(packetSent);
         		continue;
         	}
         }
@@ -225,6 +227,8 @@ public class RXPClient {
         int dataPosition = 0;
         while(dataPosition < packetSent.getPacketHeader().getDataSize()){
         	while(packetRecv.getPacketHeader().getSeqNumber() != (ackNum - 1)){
+        		
+        		sendPacket(packetSent);
         		
         		if(packetRecv.getPacketHeader().getSeqNumber() <= (ackNum - 1)) {
         			//ACK the sent packet so server knows we've already gotten it.
@@ -235,9 +239,10 @@ public class RXPClient {
         		try {
         			packetRecv = recvPacket();
         		} catch (SocketTimeoutException e) {
-        			sendPacket(packetSent);
+        			continue;
         		}
         	}
+        	
             System.arraycopy(packetRecv.getData(), 0, data, dataPosition, packetRecv.getPacketHeader().getPacketSize());
             dataPosition += packetRecv.getPacketHeader().getPacketSize();
             packetSent = packetFactory.createClientRequestPacket(sourceIP, destIP, destPort, sourcePort,
