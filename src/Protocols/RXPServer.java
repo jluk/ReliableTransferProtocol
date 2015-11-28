@@ -37,7 +37,7 @@ public class RXPServer {
         this.connectionState = 0;
         adler = new Adler32();
         windowSize = 1;
-        rcvTimeout = 1500; //0.5 secs
+        rcvTimeout = 3500; //0.5 secs
         packetFactory = new RXPServerPacketFactory();
     }
 

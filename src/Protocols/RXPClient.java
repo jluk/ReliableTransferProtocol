@@ -38,7 +38,7 @@ public class RXPClient {
         this.connectionState = 0;
         adler = new Adler32();
         windowSize = 1;
-        rcvTimeout = 1000; //0.5 secs
+        rcvTimeout = 2000; //0.5 secs
         packetFactory = new RXPClientPacketFactory();
     }
 
