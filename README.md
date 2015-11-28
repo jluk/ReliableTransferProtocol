@@ -5,6 +5,7 @@ As you write the documentation, imagine that I intend to implement your protocol
 Make sure I don't have to read your source code to figure out how to do this.
 
 Justin Luk & Hamilton Greene
+
 jluk3@gatech.edu
 
 CS 3251 Section A
@@ -13,7 +14,6 @@ Programming Assignment 2
 
 ##Files Submitted
 
-###Protocols Package
 * FXAClient.java
   * Handle user input and instantiate an RXPClient instance
 
@@ -32,12 +32,17 @@ Programming Assignment 2
 * FXAServer.java
   - Instantiation and handling of user requests utilizing an RXPServer instance
 
-###RxpPacket Package
 * RXPHeader.java
   - Define header format, handling, and transformations from primitive data type to object
 
 * RXPPacket.java
   - Data model to hold packet header and data
+ 
+* FxA-server.jar
+  - Executable FxA server for running
+  
+* FxA-client.jar
+  - Executable FxA client for running
 
 ##Instructions to run
 In this example we use 15888 and 15889 as example client and server ports
@@ -49,7 +54,8 @@ In this example we use 15888 and 15889 as example client and server ports
 5. In the second terminal, type: "java -jar FxA-client.jar FxA-client 15888 127.0.0.1 5000". 
 6. To connect the client to the server, type "connect" in the client's terminal. 
 7. To get a file from the server, type: "get example.txt". 
-8. To post a file to the server, type: "post example.txt". To disconnect the client from the server, type: "disconnect".
+8. To post a file to the server, type: "post example.txt". 
+9. To disconnect the client from the server, type: "disconnect".
 **Note: files to transport must be in the same directory as the respective jar file.**
 
 ##Updated Protocol
@@ -75,5 +81,13 @@ In this example we use 15888 and 15889 as example client and server ports
   -This method will send a close request to the RxP client instance and close itself.
 
 ##API Description
+Our API logic maintains the same steps as the prior submitted API. We take a strict approach by rejecting packets 
+that differ than what we expect based on sequence numbers. Thus, any duplicate, out of order, or lost packets are dropped 
+causing a resend by the sender when they do not receive an ACK in time. Corrupted packets are intended to be handled by 
+a checksum process.
+
+The API supports "connect", "get", "post", and "disconnect". Any other commands will not be accepted and will return an 
+error based on the input.
 
 ##Bugs & Limitations
+Sliding window size has not been fully completed and as a result, we only support a stop and wait protocol.
