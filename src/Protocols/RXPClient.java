@@ -38,7 +38,7 @@ public class RXPClient {
         this.connectionState = 0;
         adler = new Adler32();
         windowSize = 1;
-        rcvTimeout = 2000; //0.5 secs
+        rcvTimeout = 2000;
         packetFactory = new RXPClientPacketFactory();
     }
 
@@ -56,62 +56,60 @@ public class RXPClient {
             System.out.println("Address in use. Please try again...Exiting.");
             System.exit(1);
         }
-        packetSent = packetFactory.createConnectionPacket(sourceIP, destIP, destPort, sourcePort); //CC 100
-        sendPacket(packetSent);
-        System.out.println(packetSent.toString());
-        packetRecv = new RXPPacket();
         
         clientSocket.setSoTimeout(rcvTimeout);
-        int attempt = 0;
-        while( packetRecv.getPacketHeader().getConnectionCode() != 101 ) {
-        	//HAMYChange - may not need the maxAttempt
-        	/*if(attempt >= 10) {
-        		System.out.println("Couldn't connect to server.");
-        		System.exit(1);
-        	}
-
-        	attempt++;*/
-        	try{
-        		packetRecv = recvPacket();
+        packetRecv = new RXPPacket();
+        
+        packetSent = packetFactory.createConnectionPacket(sourceIP, destIP, destPort, sourcePort); //CC 100
+        
+        System.out.println(packetSent.toString());
+        
+        while(packetRecv.getPacketHeader().getConnectionCode() != 101) {
+        	
+        	sendPacket(packetSent); //CC 100
+        	try{ 
+        		packetRecv = recvPacket(); //CC 101
         	} catch(SocketTimeoutException e) {
-        		sendPacket(packetSent); //Sending CC 100
-        		continue;
+        		
         	}
-        } 
+        }
+        
         System.out.println(packetRecv.toString());
+        
+        while(packetRecv.getPacketHeader().getConnectionCode() == 100) {
+        	
+        	sendPacket(packetSent);
+        	try{ 
+        		packetRecv = recvPacket(); //CC 101
+        	} catch(SocketTimeoutException e) {
+        		
+        	}
+        }
 
         //Check to drop any packet out of expected sequence
-        if(packetRecv.getPacketHeader().getAckNumber() != (packetSent.getPacketHeader().getSeqNumber() + 1)) return -1;
+        //if(packetRecv.getPacketHeader().getAckNumber() != (packetSent.getPacketHeader().getSeqNumber() + 1)) return -1;
 
         packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
         sendPacket(packetSent); //CC 200
         System.out.println(packetSent.toString());
-
         
-        attempt = 0;
-        while( packetRecv.getPacketHeader().getConnectionCode() != 201 ) {
-        	//HAMYChange - may not need the maxAttempt
-        	if(attempt >= 100) {
-        		System.out.println("Couldn't connect to server.");
-        		System.exit(1);
-        	}
-
-        	attempt++;
-        	try{
-        		packetRecv = recvPacket();
+        while(packetRecv.getPacketHeader().getConnectionCode() != 201) {
+        	
+        	sendPacket(packetSent); //CC200
+        	try{ 
+        		packetRecv = recvPacket(); //CC 201
         	} catch(SocketTimeoutException e) {
-        		sendPacket(packetSent); //Sending CC 200
-        		continue;
+        		
         	}
-        } 
-        
+        }
+
         System.out.println(packetRecv.toString());
 
         connectionState = packetRecv.getPacketHeader().getConnectionCode();
         
-        //Reset socket timeout
         clientSocket.setSoTimeout(0);
 
+        System.out.println("Connected to Server Successfully...");
         return connectionState;
     }
 
@@ -119,62 +117,67 @@ public class RXPClient {
     public int sendData(byte[] data) throws IOException, ClassNotFoundException{
 
         if(connectionState != 201) return -1; //201 = connected
-        
-        //Set Socket Timeout
         clientSocket.setSoTimeout(rcvTimeout);
 
         //Tell server we are making a request
         packetSent = packetFactory.createPutRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length); //CC 700
-        sendPacket(packetSent);
         
-        packetRecv = new RXPPacket();
-        
-        int attempt = 0;
         while(packetRecv.getPacketHeader().getConnectionCode() != 701) {
-        	attempt++;
-        	try {
+        	
+        	sendPacket(packetSent);
+        	try{ 
         		packetRecv = recvPacket();
         	} catch(SocketTimeoutException e) {
-        		if(attempt>10) return -1; //Unable to get 701 CC
-        		sendPacket(packetSent);
-        		continue;
+        		
         	}
+        	
+        	//HAMYChange
+        	System.out.println("Waiting on CC 701 from Server...");
+        	System.out.println(packetRecv.toString());
         }
         
-        int seqNum = 0;
-
         int dataPosition = 0;
         //Packetize the data payload: Create correct packet data space by checking data length
-        packetSent = packetFactory.createSendRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length, seqNum,
+        packetSent = packetFactory.createSendRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length, 0,
                 (512 - packetSent.getPacketHeader().getHeaderSize()) >= data.length ? data.length : 512 - packetSent.getPacketHeader().getHeaderSize());
 
         //Repeat sending until all data has been sent
-        while(dataPosition < data.length){
+        outerloop: while(dataPosition < data.length){
             packetSent.setData(Arrays.copyOfRange(data, dataPosition, dataPosition + packetSent.getPacketHeader().getPacketSize()));
-            sendPacket(packetSent);
             
-            while(packetRecv.getPacketHeader().getAckNumber() != (seqNum+1)) {
-            	try{
+            while(packetRecv.getPacketHeader().getAckNumber() != dataPosition + packetRecv.getPacketHeader().getPacketSize()
+            		&& packetRecv.getPacketHeader().getAckNumber() != dataPosition + packetRecv.getPacketHeader().getDataSize()) {
+            	
+            	sendPacket(packetSent);
+            	try{ 
             		packetRecv = recvPacket();
             	} catch(SocketTimeoutException e) {
-            		sendPacket(packetSent);
-            		continue;
+            		
             	}
             	
-            	System.out.println("PacketAckNum: " + packetRecv.getPacketHeader().getAckNumber());
-            	System.out.println("ClientseqNum: " + seqNum);
+            	//Breaks out if the server is trying to do something
+            	if(packetRecv.getPacketHeader().getConnectionCode() == 700) break outerloop;
+            	
+            	//HAMYChange
+                System.out.println(packetRecv.toString());
+                System.out.println("DataPosition: " + dataPosition);
             }
             
-            //HAMYChange - is this correct?
-            dataPosition += packetSent.getPacketHeader().getPacketSize();
-            packetSent = packetFactory.createSendRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length, seqNum,
+            
+            
+            //HAMYChange
+            System.out.println(packetRecv.toString());
+            System.out.println("ClientSend");
+            
+            dataPosition = packetRecv.getPacketHeader().getAckNumber();
+            packetSent = packetFactory.createSendRequestPacket(sourceIP, destIP, destPort, sourcePort, data.length, packetRecv.getPacketHeader().getAckNumber(),
                     (512 - packetSent.getPacketHeader().getHeaderSize()) >= data.length -  dataPosition ? data.length - dataPosition : 512 - packetSent.getPacketHeader().getHeaderSize());
-        
-            seqNum+=2;
         }
 
-        //Return socket timeout to infinity
         clientSocket.setSoTimeout(0);
+        
+        //HAMYChange
+        System.out.println("Finished sending...");
         
         //Success
         return 0;
@@ -192,65 +195,66 @@ public class RXPClient {
     private byte[] serverSendRequestHandler() throws IOException, ClassNotFoundException{
     	
     	//HAMYChange
-    	System.out.println("Receiving file from server...");
+    	System.out.println("ServerSendRequestHandler...");
     	clientSocket.setSoTimeout(rcvTimeout);
     	
     	while(packetRecv.getPacketHeader().getConnectionCode() != 700) {
-    		sendPacket(packetSent);
-    		
-    		try { 
-    			packetRecv = recvPacket();
-    		} catch (SocketTimeoutException e) {
-    			continue;
-    		}
-    		
-    		//HAMYChange
-    		System.out.println("Waiting on CC 700 from server...");
-    	}
-    	
-    	int ackNum = 1;
+
+        	try{ 
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		
+        	}
+        	
+        	//HAMYChange
+            System.out.println("Waiting on CC 700 from Server...");
+        }
 
         //Determine response packet from client to server
         packetSent = packetFactory.createNextPacket(packetRecv, sourceIP, sourcePort);
+        sendPacket(packetSent);
         
         while(packetRecv.getPacketHeader().getConnectionCode() == 700) {
+
+        	try{ 
+        		packetRecv = recvPacket();
+        	} catch(SocketTimeoutException e) {
+        		
+        	}
+        	
         	sendPacket(packetSent);
         	
-        	try {
-        		packetRecv = recvPacket();
-        	} catch (SocketTimeoutException e) {
-        		continue;
-        	}
+        	//HAMYChange
+            System.out.println("Receiving CC 700 from Server...");
         }
+        
         byte[] data = new byte[packetSent.getPacketHeader().getDataSize()];
 
         int dataPosition = 0;
         while(dataPosition < packetSent.getPacketHeader().getDataSize()){
-        	while(packetRecv.getPacketHeader().getSeqNumber() != (ackNum - 1)){
-        		
-        		sendPacket(packetSent);
-        		
-        		if(packetRecv.getPacketHeader().getSeqNumber() <= (ackNum - 1)) {
-        			//ACK the sent packet so server knows we've already gotten it.
-        			sendPacket(packetFactory.createClientRequestPacket(sourceIP, destIP, destPort, sourcePort,
-                    packetRecv.getPacketHeader().getDataSize(), packetRecv.getPacketHeader().getSeqNumber() + 1));
-        		}
-        		
-        		try {
-        			packetRecv = recvPacket();
-        		} catch (SocketTimeoutException e) {
-        			continue;
-        		}
-        	}
-        	
+            
+            while(packetRecv.getPacketHeader().getSeqNumber() != dataPosition) {
+            	
+            	sendPacket(packetSent);
+            	try{ 
+            		packetRecv = recvPacket();
+            	} catch(SocketTimeoutException e) {
+            		
+            	}
+            	
+            	//HAMYChange
+                System.out.println(packetRecv.toString());
+                System.out.println("DataPosition: " + dataPosition);
+            }
+            
+            System.out.println("PacketAccepted");
+            
             System.arraycopy(packetRecv.getData(), 0, data, dataPosition, packetRecv.getPacketHeader().getPacketSize());
             dataPosition += packetRecv.getPacketHeader().getPacketSize();
             packetSent = packetFactory.createClientRequestPacket(sourceIP, destIP, destPort, sourcePort,
-                    packetRecv.getPacketHeader().getDataSize(), ackNum);
+                    packetRecv.getPacketHeader().getDataSize(), dataPosition);
 
             sendPacket(packetSent);
-            
-            ackNum += 2;
         }
 
         clientSocket.setSoTimeout(0);
@@ -284,7 +288,6 @@ public class RXPClient {
 
         //Store datagramPacket in byte[]
         recvPacket = new DatagramPacket(recv, recv.length);
-        
         clientSocket.receive(recvPacket);
 
         //Build an RXPPacket with datagramPacket

@@ -91,7 +91,6 @@ public class RXPServerPacketFactory {
                 packetHeader.setAckNumber(packetRecvd.getPacketHeader().getSeqNumber() + 1);
                 break;
 
-            //Gettigng data from client
             case 705:
                 packetHeader.setDataSize(packetRecvd.getPacketHeader().getDataSize());
                 packetHeader.setPacketSize(0);
@@ -102,19 +101,6 @@ public class RXPServerPacketFactory {
                 packetHeader.setDestPort(packetRecvd.getPacketHeader().getDestPort());
                 packetHeader.setSeqNumber(Math.abs(rand.nextInt()));
                 packetHeader.setAckNumber(packetRecvd.getPacketHeader().getSeqNumber() + 1);
-                break;
-                
-            //Sending data to client    
-            case 706:
-            	packetHeader.setDataSize(packetRecvd.getPacketHeader().getDataSize());
-                packetHeader.setPacketSize(0);
-                packetHeader.setConnectionCode(705);
-                packetHeader.setSourceIP(sourceIP);
-                packetHeader.setSourcePort(sourcePort);
-                packetHeader.setDestIP(packetRecvd.getPacketHeader().getDestIP());
-                packetHeader.setDestPort(packetRecvd.getPacketHeader().getDestPort());
-                packetHeader.setSeqNumber(packetRecvd.getPacketHeader().getAckNumber() + 1);
-                packetHeader.setAckNumber(Math.abs(rand.nextInt()));
                 break;
 
             default:
